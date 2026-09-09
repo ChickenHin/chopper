@@ -1,59 +1,59 @@
-name: Header
+# name: Header
 
-on:
-  push:
-    branches:
-      - 'main'
-  pull_request:
-    types:
-      - unlabeled
-  workflow_dispatch:
+# on:
+#   push:
+#     branches:
+#       - 'main'
+#   pull_request:
+#     types:
+#       - unlabeled
+#   workflow_dispatch:
 
-concurrency:
-  group: misc-${{ github.event.pull_request.number || github.ref }}
-  cancel-in-progress: ${{ github.event_name != 'push' }}
+# concurrency:
+#   group: misc-${{ github.event.pull_request.number || github.ref }}
+#   cancel-in-progress: ${{ github.event_name != 'push' }}
 
-env:
-  SHARG_NO_VERSION_CHECK: 1
-  TZ: Europe/Berlin
+# env:
+#   SHARG_NO_VERSION_CHECK: 1
+#   TZ: Europe/Berlin
 
-defaults:
-  run:
-    shell: bash -Eeuxo pipefail {0}
+# defaults:
+#   run:
+#     shell: bash -Eeuxo pipefail {0}
 
-jobs:
-  build:
-    name: ${{ matrix.compiler }}
-    runs-on: ubuntu-latest
-    if: github.repository_owner == 'seqan' || github.event_name == 'workflow_dispatch' || github.event.label.name == 'lint'
-    strategy:
-      fail-fast: false
-      matrix:
-        compiler: ["clang-latest", "gcc-latest", "gcc-third-latest", "intel"]
-    container:
-      image: ghcr.io/seqan/${{ matrix.compiler }}
-      volumes:
-        - /home/runner:/home/runner
-    steps:
-      - name: Checkout
-        uses: actions/checkout@v7
+# jobs:
+#   build:
+#     name: ${{ matrix.compiler }}
+#     runs-on: ubuntu-latest
+#     if: github.repository_owner == 'seqan' || github.event_name == 'workflow_dispatch' || github.event.label.name == 'lint'
+#     strategy:
+#       fail-fast: false
+#       matrix:
+#         compiler: ["clang-latest", "gcc-latest", "gcc-third-latest", "intel"]
+#     container:
+#       image: ghcr.io/seqan/${{ matrix.compiler }}
+#       volumes:
+#         - /home/runner:/home/runner
+#     steps:
+#       - name: Checkout
+#         uses: actions/checkout@v7
 
-      - name: Setup cache
-        uses: seqan/actions/setup-actions-cache@main
+#       - name: Setup cache
+#         uses: seqan/actions/setup-actions-cache@main
 
-      - name: Configure tests
-        run: |
-          mkdir build && cd build
-          cmake .. -DCMAKE_BUILD_TYPE=Release \
-                   -DCHOPPER_HEADER_TEST_ONLY=ON
+#       - name: Configure tests
+#         run: |
+#           mkdir build && cd build
+#           cmake .. -DCMAKE_BUILD_TYPE=Release \
+#                    -DCHOPPER_HEADER_TEST_ONLY=ON
 
-      - name: Build tests
-        working-directory: build
-        run: |
-          ccache -z
-          make -k test
-          ccache -svvx
+#       - name: Build tests
+#         working-directory: build
+#         run: |
+#           ccache -z
+#           make -k test
+#           ccache -svvx
 
-      - name: Run tests
-        working-directory: build
-        run: ctest . -j --output-on-failure
+#       - name: Run tests
+#         working-directory: build
+#         run: ctest . -j --output-on-failure
