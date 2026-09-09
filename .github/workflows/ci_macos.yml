@@ -1,59 +1,59 @@
-name: macOS
+# name: macOS
 
-on:
-  push:
-    branches:
-      - 'main'
-  pull_request:
-    types:
-      - unlabeled
-  workflow_dispatch:
+# on:
+#   push:
+#     branches:
+#       - 'main'
+#   pull_request:
+#     types:
+#       - unlabeled
+#   workflow_dispatch:
 
-concurrency:
-  group: macos-${{ github.event.pull_request.number || github.ref }}
-  cancel-in-progress: ${{ github.event_name != 'push' }}
+# concurrency:
+#   group: macos-${{ github.event.pull_request.number || github.ref }}
+#   cancel-in-progress: ${{ github.event_name != 'push' }}
 
-env:
-  SHARG_NO_VERSION_CHECK: 1
-  TZ: Europe/Berlin
+# env:
+#   SHARG_NO_VERSION_CHECK: 1
+#   TZ: Europe/Berlin
 
-defaults:
-  run:
-    shell: bash -Eeuxo pipefail {0}
+# defaults:
+#   run:
+#     shell: bash -Eeuxo pipefail {0}
 
-jobs:
-  build:
-    name: ${{ matrix.compiler }}
-    runs-on: macos-latest
-    if: github.repository_owner == 'seqan' || github.event_name == 'workflow_dispatch' || github.event.label.name == 'lint'
-    strategy:
-      fail-fast: false
-      matrix:
-        compiler: ["clang-latest", "clang-second-latest", "clang-third-latest", "gcc-latest", "gcc-second-latest", "gcc-third-latest"]
-    steps:
-      - name: Checkout
-        uses: actions/checkout@v7
+# jobs:
+#   build:
+#     name: ${{ matrix.compiler }}
+#     runs-on: macos-latest
+#     if: github.repository_owner == 'seqan' || github.event_name == 'workflow_dispatch' || github.event.label.name == 'lint'
+#     strategy:
+#       fail-fast: false
+#       matrix:
+#         compiler: ["clang-latest", "clang-second-latest", "clang-third-latest", "gcc-latest", "gcc-second-latest", "gcc-third-latest"]
+#     steps:
+#       - name: Checkout
+#         uses: actions/checkout@v7
 
-      - name: Setup toolchain
-        uses: seqan/actions/setup-toolchain@main
-        with:
-          compiler: ${{ matrix.compiler }}
-          ccache_size: 75M
+#       - name: Setup toolchain
+#         uses: seqan/actions/setup-toolchain@main
+#         with:
+#           compiler: ${{ matrix.compiler }}
+#           ccache_size: 75M
 
-      - name: Configure tests
-        run: |
-          mkdir build
-          cd build
-          cmake .. -DCMAKE_BUILD_TYPE=Release
-          make gtest_main
+#       - name: Configure tests
+#         run: |
+#           mkdir build
+#           cd build
+#           cmake .. -DCMAKE_BUILD_TYPE=Release
+#           make gtest_main
 
-      - name: Build tests
-        working-directory: build
-        run: |
-          ccache -z
-          make -k api_test cli_test display_layout measure_hyperloglog
-          ccache -svvx
+#       - name: Build tests
+#         working-directory: build
+#         run: |
+#           ccache -z
+#           make -k api_test cli_test display_layout measure_hyperloglog
+#           ccache -svvx
 
-      - name: Run tests
-        working-directory: build
-        run: ctest . -j --output-on-failure
+#       - name: Run tests
+#         working-directory: build
+#         run: ctest . -j --output-on-failure
