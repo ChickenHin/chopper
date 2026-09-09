@@ -1,92 +1,92 @@
-name: Documentation
+# name: Documentation
 
-on:
-  push:
-    branches:
-      - 'main'
-  pull_request_target:
-    types:
-      - unlabeled
-      - closed
-  workflow_dispatch:
+# on:
+#   push:
+#     branches:
+#       - 'main'
+#   pull_request_target:
+#     types:
+#       - unlabeled
+#       - closed
+#   workflow_dispatch:
 
-concurrency:
-  group: documentation-${{ github.event.pull_request.number || github.ref }}
-  cancel-in-progress: ${{ github.event_name != 'push' }}
+# concurrency:
+#   group: documentation-${{ github.event.pull_request.number || github.ref }}
+#   cancel-in-progress: ${{ github.event_name != 'push' }}
 
-env:
-  TZ: Europe/Berlin
+# env:
+#   TZ: Europe/Berlin
 
-defaults:
-  run:
-    shell: bash -Eeuxo pipefail {0}
+# defaults:
+#   run:
+#     shell: bash -Eeuxo pipefail {0}
 
-jobs:
-  build:
-    name: Documentation
-    runs-on: ubuntu-latest
-    if: ( github.repository_owner == 'seqan' || github.event_name == 'workflow_dispatch' || github.event.label.name == 'lint' ) && github.event.action != 'closed'
-    steps:
-      - name: Checkout
-        if: github.event_name != 'pull_request_target'
-        uses: actions/checkout@v7
+# jobs:
+#   build:
+#     name: Documentation
+#     runs-on: ubuntu-latest
+#     if: ( github.repository_owner == 'seqan' || github.event_name == 'workflow_dispatch' || github.event.label.name == 'lint' ) && github.event.action != 'closed'
+#     steps:
+#       - name: Checkout
+#         if: github.event_name != 'pull_request_target'
+#         uses: actions/checkout@v7
 
-      # pull_request_target does not checkout the merge commit by default
-      - name: Checkout
-        if: github.event_name == 'pull_request_target'
-        uses: actions/checkout@v7
-        with:
-          ref: "refs/pull/${{ github.event.number }}/merge"
-          allow-unsafe-pr-checkout: true
+#       # pull_request_target does not checkout the merge commit by default
+#       - name: Checkout
+#         if: github.event_name == 'pull_request_target'
+#         uses: actions/checkout@v7
+#         with:
+#           ref: "refs/pull/${{ github.event.number }}/merge"
+#           allow-unsafe-pr-checkout: true
 
-      - name: Install Doxygen
-        uses: seqan/actions/setup-doxygen@main
-        with:
-          doxygen: 1.9.4
+#       - name: Install Doxygen
+#         uses: seqan/actions/setup-doxygen@main
+#         with:
+#           doxygen: 1.9.4
 
-      - name: Configure tests
-        env:
-          CXX: /usr/bin/g++-14
-        run: |
-          mkdir build && cd build
-          cmake ..
+#       - name: Configure tests
+#         env:
+#           CXX: /usr/bin/g++-14
+#         run: |
+#           mkdir build && cd build
+#           cmake ..
 
-      - name: Run tests
-        working-directory: build
-        run: |
-          make -k doc 2>doxygen_warnings.txt
-          cat doxygen_warnings.txt
-          test ! -s doxygen_warnings.txt
+#       - name: Run tests
+#         working-directory: build
+#         run: |
+#           make -k doc 2>doxygen_warnings.txt
+#           cat doxygen_warnings.txt
+#           test ! -s doxygen_warnings.txt
 
-      - name: Deploy Preview
-        if: github.event_name == 'pull_request_target'
-        uses: seqan/actions/documentation_deploy_preview@main
-        with:
-          deploy_host: ${{ secrets.DEPLOY_HOST }}
-          deploy_user: ${{ secrets.DEPLOY_USER }}
-          deploy_ssh_key: ${{ secrets.DEPLOY_SSH_KEY }}
-          deploy_base_path: ${{ secrets.DEPLOY_PREVIEW_BASE_PATH }}
-          source_path_user_doc: build/doc/html
-          token: ${{ secrets.SEQAN_ACTIONS_PAT }}
+#       - name: Deploy Preview
+#         if: github.event_name == 'pull_request_target'
+#         uses: seqan/actions/documentation_deploy_preview@main
+#         with:
+#           deploy_host: ${{ secrets.DEPLOY_HOST }}
+#           deploy_user: ${{ secrets.DEPLOY_USER }}
+#           deploy_ssh_key: ${{ secrets.DEPLOY_SSH_KEY }}
+#           deploy_base_path: ${{ secrets.DEPLOY_PREVIEW_BASE_PATH }}
+#           source_path_user_doc: build/doc/html
+#           token: ${{ secrets.SEQAN_ACTIONS_PAT }}
 
-      - name: Deploy Documentation
-        if: github.event_name == 'push'
-        uses: seqan/actions/documentation_deploy_production@main
-        with:
-          deploy_host: ${{ secrets.DEPLOY_HOST }}
-          deploy_user: ${{ secrets.DEPLOY_USER }}
-          deploy_ssh_key: ${{ secrets.DEPLOY_SSH_KEY }}
-          source_path_user_doc: build/doc/html/
-          deploy_path_user_doc: ${{ secrets.DEPLOY_PRODUCTION_BASE_PATH }}/main
-  delete:
-      name: Delete Preview
-      runs-on: ubuntu-latest
-      if: github.repository_owner == 'seqan' && github.event_name == 'pull_request_target' && github.event.action == 'closed'
-      steps:
-      - name: Delete Preview
-        uses: seqan/actions/documentation_delete_preview@main
-        with:
-          deploy_host: ${{ secrets.DEPLOY_HOST }}
-          deploy_user: ${{ secrets.DEPLOY_USER }}
-          deploy_ssh_key: ${{ secrets.DEPLOY_SSH_KEY }}
-          deploy_base_path: ${{ secrets.DEPLOY_PREVIEW_BASE_PATH }}
+#       - name: Deploy Documentation
+#         if: github.event_name == 'push'
+#         uses: seqan/actions/documentation_deploy_production@main
+#         with:
+#           deploy_host: ${{ secrets.DEPLOY_HOST }}
+#           deploy_user: ${{ secrets.DEPLOY_USER }}
+#           deploy_ssh_key: ${{ secrets.DEPLOY_SSH_KEY }}
+#           source_path_user_doc: build/doc/html/
+#           deploy_path_user_doc: ${{ secrets.DEPLOY_PRODUCTION_BASE_PATH }}/main
+#   delete:
+#       name: Delete Preview
+#       runs-on: ubuntu-latest
+#       if: github.repository_owner == 'seqan' && github.event_name == 'pull_request_target' && github.event.action == 'closed'
+#       steps:
+#       - name: Delete Preview
+#         uses: seqan/actions/documentation_delete_preview@main
+#         with:
+#           deploy_host: ${{ secrets.DEPLOY_HOST }}
+#           deploy_user: ${{ secrets.DEPLOY_USER }}
+#           deploy_ssh_key: ${{ secrets.DEPLOY_SSH_KEY }}
+#           deploy_base_path: ${{ secrets.DEPLOY_PREVIEW_BASE_PATH }}
